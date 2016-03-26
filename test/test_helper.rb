@@ -198,7 +198,13 @@ if ENV["DB"] == "active_record"
   ActiveRecord::Base.establish_connection
   ActiveRecord::Base.logger = $logger
 
+  Vanity.connect!(VanityTestHelpers::DATABASE)
   require "generators/templates/vanity_migration"
-  VanityMigration.down rescue nil
-  VanityMigration.up
+  connection = Vanity::Adapters::ActiveRecordAdapter::VanityRecord.connection
+  table_name = Vanity::Adapters::ActiveRecordAdapter::VanityExperiment.table_name
+  # If any tables exist, drop them
+  if connection.table_exists?(table_name)
+    VanityMigration.new.migrate(:down)
+  end
+  VanityMigration.new.migrate(:up)
 end
